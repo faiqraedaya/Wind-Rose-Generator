@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QPushButton, QSpinBox, QLabel, QDateTimeEdit, QGroupBox, QMessageBox, QComboBox)
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QPushButton, QSpinBox, QLabel, QDateTimeEdit, QGroupBox, QMessageBox, QComboBox, QMenuBar, QMenu, QAction)
+from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -17,6 +18,10 @@ class WindRoseApp(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
         # Define default colors to match the image
         self.default_colors = ['blue', 'cyan', 'lightgreen', 'yellow', 'red', 'darkred']
+        
+        # Create menu bar
+        self.create_menu_bar()
+        
         # Main widget and layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -24,10 +29,7 @@ class WindRoseApp(QMainWindow):
         # Control panel
         control_panel = QWidget()
         control_layout = QVBoxLayout(control_panel)
-        # File selection
-        self.load_button = QPushButton('Load Excel File')
-        self.load_button.clicked.connect(self.load_excel)
-        control_layout.addWidget(self.load_button)
+
         # Data configuration group
         data_config_group = QGroupBox('Data Configuration')
         self.data_config = DataConfigWidget()
@@ -35,6 +37,7 @@ class WindRoseApp(QMainWindow):
         data_config_layout.addWidget(self.data_config)
         data_config_group.setLayout(data_config_layout)
         control_layout.addWidget(data_config_group)
+
         # Direction bins control
         dir_layout = QHBoxLayout()
         dir_layout.addWidget(QLabel('Direction Bins:'))
@@ -43,6 +46,7 @@ class WindRoseApp(QMainWindow):
         self.dir_bins.setValue(16)
         dir_layout.addWidget(self.dir_bins)
         control_layout.addLayout(dir_layout)
+
         # Number of speed categories control
         speed_cat_layout = QHBoxLayout()
         speed_cat_layout.addWidget(QLabel('Number of Speed Categories:'))
@@ -52,14 +56,17 @@ class WindRoseApp(QMainWindow):
         self.num_speed_cats.valueChanged.connect(self.update_speed_categories)
         speed_cat_layout.addWidget(self.num_speed_cats)
         control_layout.addLayout(speed_cat_layout)
+
         # Wind speed categories group
         self.speed_group = QGroupBox('Wind Speed Categories (m/s)')
         self.speed_layout = QVBoxLayout()
         self.speed_group.setLayout(self.speed_layout)
         control_layout.addWidget(self.speed_group)
+
         # Initialize speed range widgets
         self.speed_ranges = []
         self.setup_default_ranges()
+
         # Date range selection group
         date_group = QGroupBox('Date Range')
         date_layout = QVBoxLayout()
@@ -73,19 +80,12 @@ class WindRoseApp(QMainWindow):
         date_layout.addWidget(self.end_date)
         date_group.setLayout(date_layout)
         control_layout.addWidget(date_group)
+
         # Update and Export buttons
         self.update_button = QPushButton('Update Wind Rose')
         self.update_button.clicked.connect(self.update_wind_rose)
         control_layout.addWidget(self.update_button)
-        self.export_image_button = QPushButton('Export Wind Rose Image')
-        self.export_image_button.clicked.connect(self.export_image)
-        control_layout.addWidget(self.export_image_button)
-        self.export_table_button = QPushButton('Export Wind Rose Table')
-        self.export_table_button.clicked.connect(self.export_table)
-        control_layout.addWidget(self.export_table_button)
-        self.export_XML_button = QPushButton('Export Wind Rose XML')
-        self.export_XML_button.clicked.connect(self.export_XML)
-        control_layout.addWidget(self.export_XML_button)
+
         # Add control panel to main layout
         layout.addWidget(control_panel, stretch=1)
         # Matplotlib figure
@@ -96,6 +96,98 @@ class WindRoseApp(QMainWindow):
         self.csvdata = None
         self.raw_data = None
         self.current_filename = "Unknown File"
+
+    def create_menu_bar(self):
+        menubar = self.menuBar()
+        
+        # File Menu
+        file_menu = menubar.addMenu('File')
+        
+        new_action = QAction('New', self)
+        new_action.setShortcut('Ctrl+N')
+        new_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_action)
+        
+        open_action = QAction('Open Excel File', self)
+        open_action.setShortcut('Ctrl+O')
+        open_action.triggered.connect(self.load_excel)
+        file_menu.addAction(open_action)
+        
+        file_menu.addSeparator()
+        
+        exit_action = QAction('Exit', self)
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+        
+        # Export Menu
+        export_menu = menubar.addMenu('Export')
+        
+        export_image_action = QAction('Export Wind Rose Image', self)
+        export_image_action.triggered.connect(self.export_image)
+        export_menu.addAction(export_image_action)
+        
+        export_table_action = QAction('Export Wind Rose Table', self)
+        export_table_action.triggered.connect(self.export_table)
+        export_menu.addAction(export_table_action)
+        
+        export_xml_action = QAction('Export Wind Rose XML', self)
+        export_xml_action.triggered.connect(self.export_XML)
+        export_menu.addAction(export_xml_action)
+        
+        # Help Menu
+        help_menu = menubar.addMenu('Help')
+        
+        about_action = QAction('About', self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+        
+        help_action = QAction('Help', self)
+        help_action.triggered.connect(self.show_help)
+        help_menu.addAction(help_action)
+
+    def new_file(self):
+        # Reset the application state
+        self.raw_data = None
+        self.data = None
+        self.csvdata = None
+        self.current_filename = "Unknown File"
+        self.figure.clear()
+        self.canvas.draw()
+        
+        # Reset date range to current date
+        current_date = datetime.now()
+        self.start_date.setDateTime(current_date)
+        self.end_date.setDateTime(current_date)
+
+    def show_about(self):
+        QMessageBox.about(self, "About Wind Rose Generator",
+                         "Wind Rose Generator\n\n"
+                         "Simple tool for generating wind roses.\n"
+                         "Version 1.0\n\n"
+                         "© Faiq Raedaya 2025")
+
+    def show_help(self):
+        help_text = """
+        <h3>Wind Rose Generator Help</h3>
+        
+        <p><b>Loading Data:</b><br>
+        - Use File > Open Excel File to load your wind data<br>
+        - Ensure your Excel file has columns for date/time, wind speed, and wind direction</p>
+        
+        <p><b>Configuring the Display:</b><br>
+        - Adjust the number of direction bins (4-36)<br>
+        - Set the number of speed categories (2-10)<br>
+        - Configure speed ranges for each category</p>
+        
+        <p><b>Exporting Results:</b><br>
+        - Export the wind rose as an image (PNG/JPEG)<br>
+        - Export the frequency table as Excel<br>
+        - Export the data in XML format</p>
+        
+        <p><b>Date Range:</b><br>
+        - Select the start and end dates to analyze specific time periods</p>
+        """
+        QMessageBox.information(self, "Help", help_text)
 
     def setup_default_ranges(self):
         for widget in self.speed_ranges:
