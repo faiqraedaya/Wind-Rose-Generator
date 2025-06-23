@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from windrose.windrose_app import WindRoseApp
+from src.windrose.windrose_app import WindRoseApp
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
