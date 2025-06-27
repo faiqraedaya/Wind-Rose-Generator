@@ -1,7 +1,7 @@
 # Wind Rose Generator
 
 ## Overview
-A Python-based application for generating and analyzing wind rose diagrams from meteorological data. This tool provides an intuitive graphical interface for visualizing wind patterns and exporting the results in various formats.
+A Python-based application for generating highly-customizable wind rose diagrams from large meteorological dataset.
 
 ## Features
 - Interactive GUI built with PyQt5
@@ -34,7 +34,7 @@ A Python-based application for generating and analyzing wind rose diagrams from 
    ```
 
 ## Usage
-1. Run the application:
+1. **Launch the application:**
 ```bash
 python main.py
 ```
